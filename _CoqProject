@@ -1,0 +1,7 @@
+-R . "ED"
+COQC = hoqc
+COQDEP = hoqdep
+polynomial.v
+hit_structure.v
+groupoid.v
+path_space.v
