@@ -309,11 +309,16 @@ Section H_alg.
   (** First of all, we have the `ap` operation on paths.
       This gives an algebra structure using the lifted groupoid.
    *)
+  (** For every constuctor `C_i : P_i[H] -> H` of `H`, require a morphism
+        P_i[G] -> G
+      which lies over `C_i`.
+   *)
+  Definition hit_point_morph (G : groupoid H) (i : sig_point_index Σ) :=
+    A_relation_morph
+      (hom (lift_groupoid G (sig_point Σ i)))
+      (fmap (hit_point i) (hom G)).
   Definition P_alg (G : groupoid H) : Type
-    := forall (i : sig_point_index Σ)
-              (x y : poly_act (sig_point Σ i) H),
-      hom (lift_groupoid G (sig_point Σ i)) x y
-      -> hom G (hit_point i x) (hit_point i y).
+    := forall (i : sig_point_index Σ), hit_point_morph G i.
 
   (** Second of all, we need to have the path constructors. *)
   Definition contains
