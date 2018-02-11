@@ -110,14 +110,14 @@ Proof.
   - intros [? | ?] [? | ?] ; try contradiction ; apply ic.
 Defined.    
 
-(** We can apply polynomial fucntors to groupoids. *)
+(** We can apply polynomial functors to groupoids. *)
 Definition lift_groupoid
            {A : Type} (G : groupoid A) (P : polynomial)
   : groupoid (poly_act P A).
 Proof.
   induction P ; simpl.
   - exact G.
-  - apply path_groupoid.
+  - exact (path_groupoid T).
   - apply prod_groupoid ; assumption.
   - apply sum_groupoid ; assumption.
 Defined.
@@ -167,6 +167,12 @@ Class is_grpd_morph
            map.2 x z (p × q) = (map.2 x y p × map.2 y z q)
      }.
 
+(** A-groupoid morphisms are trivially groupoid morphisms *)
+Instance Agrpd_morph_is_grpd_morph (A : Type) (G₁ G₂ : groupoid A)
+   (f : A_relation_morph (hom G₁) (hom G₂))
+  `{is_Agrpd_morph _ _ _ f} : is_grpd_morph (idmap; f).
+Proof. esplit; eauto using Amorph_e, Amorph_i, Amorph_c. Defined.
+
 Arguments morph_e {_} {_} {_} {_} _ {_} _.
 Arguments morph_i {_} {_} {_} {_} _ {_} _.
 Arguments Amorph_c {_} {_} {_} {_} _ {_} _.
@@ -181,16 +187,27 @@ Definition grpd_morph
            (G₁ : groupoid A) (G₂ : groupoid B)
   := {map : relation_morph (hom G₁) (hom G₂) & merely (is_grpd_morph map)}.
 
-(** We need the identity. *)
-Definition id_Agrpd {A : Type} (G₁ : groupoid A)
-  : Agrpd_morph G₁ G₁.
+(** Make the lifting Agrpd_morph_is_grpd_morph explicit on the level of sigma types. *)
+Definition Agrpd_morph_lift {A : Type} (G₁ G₂ : groupoid A) :
+  Agrpd_morph G₁ G₂ -> grpd_morph G₁ G₂.
 Proof.
-  unshelve eexists.
-  - intros ? ?.
-    exact idmap.
-  - apply tr.
-    unshelve esplit ; reflexivity.
+  intros [f pf].
+  simple refine (_;_).
+  - exists idmap. apply f.
+  - simpl. strip_truncations. apply tr. apply _.
 Defined.
+
+Definition BuildAGrpdMorph {A : Type} (G₁ G₂ : groupoid A)
+  (f : A_relation_morph (hom G₁) (hom G₂)) `{is_Agrpd_morph _ _ _ f}
+  : Agrpd_morph G₁ G₂.
+Proof. exists f. apply tr. apply _. Defined.
+
+(** We need the identity. *)
+Instance id_is_Agrpd_morph {A : Type} (G₁ : groupoid A) :
+  @is_Agrpd_morph A G₁ G₁ (fun _ _ => idmap).
+Proof. esplit; reflexivity. Defined.
+Definition id_Agrpd {A : Type} (G₁ : groupoid A)
+  : Agrpd_morph G₁ G₁ := BuildAGrpdMorph _ _ (fun _ _ => idmap).
 
 (** Now we show lifting is functorial. *)
 Definition sum_func
