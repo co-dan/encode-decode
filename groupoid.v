@@ -292,8 +292,11 @@ Section H_alg.
   (** First of all, we have the `ap` operation on paths.
       This gives an algebra structure using the lifted groupoid.
    *)
-  Definition P_alg {A : Type} (P : polynomial) (G : groupoid A)
-    := grpd_morph (lift_groupoid G P) G.
+  Definition P_alg (G : groupoid H) : Type
+    := forall (i : sig_point_index Σ)
+              (x y : poly_act (sig_point Σ i) H),
+      hom (lift_groupoid G (sig_point Σ i)) x y
+      -> hom G (hit_point i x) (hit_point i y).
 
   (** Second of all, we need to have the path constructors. *)
   Definition contains
@@ -319,8 +322,7 @@ Section H_alg.
   (** Now we can define the structure of the path space. *)
   Record Halg :=
     { H_grpd : groupoid H ;
-      point_alg : forall (i : sig_point_index Σ),
-          P_alg (sig_point Σ i) H_grpd ;
+      point_alg : P_alg H_grpd ;
       path_alg : forall (j : sig_path_index Σ),
           contains H_grpd
                    (endpoint_act hit_point (sig_path_lhs Σ j))
@@ -331,9 +333,18 @@ Section H_alg.
 
   (** For the morphisms, we have multiple requirements. *)
   Definition preserves_alg {G₁ G₂ : Halg} (F : Agrpd_morph (H_grpd G₁) (H_grpd G₂))
-    : Type.
-  Proof.
-  Admitted.
+    : Type
+    := forall (i : sig_point_index Σ)
+              (a₁ a₂ : poly_act (sig_point Σ i) H)
+              (x : hom (lift_groupoid (H_grpd G₁) (sig_point Σ i)) a₁ a₂),
+      F.1 _ _ (point_alg G₁ i _ _ x)
+      =
+      point_alg
+        G₂
+        i
+        _
+        _
+        ((poly_func (sig_point Σ i) (H_grpd G₁) (H_grpd G₂) F).1 _ _ x).    
   
   Definition preserves_paths {G₁ G₂ : Halg} (F : Agrpd_morph (H_grpd G₁) (H_grpd G₂))
     : Type
