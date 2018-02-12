@@ -614,23 +614,18 @@ Section inductive_part.
         exact (tr (inr y;ap inr p)).
   Defined.
 
-  Definition surj
-    : forall (h : H), merely {x : T & (p_T x = h)}.
+  Instance p_T_surj : IsSurjection p_T.
   Proof.
-    simple refine (@hit_ind Σ H (fun h => merely {x : T & (p_T x = h)}) _ _).
-    - intros i x Hx.
-      simpl in *.
-      simple refine (Trunc_rec _ (wat i x Hx)) ; intro X.
-      destruct X as [X p].
+    apply BuildIsSurjection.
+    simple refine (@hit_ind Σ H _ _ _).
+    - simpl; intros i x Hx.
+      simple refine (Trunc_rec _ (wat i x Hx)) ; intros [X p].
       apply tr.
       exists (hit_point _ X).
       unfold p_T.
       rewrite hit_point_rec_beta.
-      rewrite p.
-      reflexivity.
-    - unfold path_over.
-      intros.
-      simpl.
+      f_ap.
+    - unfold path_over; intros.
       apply path_ishprop.
   Defined.
 End inductive_part.
