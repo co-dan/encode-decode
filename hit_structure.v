@@ -564,3 +564,73 @@ Section HIT_Recursion.
     Defined.
   End beta_path.
 End HIT_Recursion.
+
+Section inductive_part.
+  Variable (Σ : hit_signature).
+
+  Definition inductive_part : hit_signature :=
+    {|sig_point_index := sig_point_index Σ ;
+      sig_point := sig_point Σ ;
+      sig_path_index := Empty ;
+      sig_path_param := Empty_rec ;
+      sig_path_lhs := Empty_ind _ ;
+      sig_path_rhs := Empty_ind _|}.
+
+  Variable (H : HIT Σ) (T : HIT inductive_part).
+
+  Definition p_T : T -> H.
+  Proof.
+    simple refine (hit_rec inductive_part T H _ (Empty_ind _)).
+    compute.
+    apply hit_point.
+  Defined.
+
+  Definition wat
+             (i : sig_point_index Σ)
+             (x : poly_act (sig_point Σ i) H)
+             (Hx : poly_fam (sig_point Σ i) (fun h : H => merely {x : T & p_T x = h}) x)
+    : merely ({X : poly_act (sig_point Σ i) T & poly_map (sig_point Σ i) p_T X = x}).
+  Proof.
+    induction (sig_point Σ i) ; simpl in *.
+    + simple refine (Trunc_rec _ Hx).
+      intro X.
+      exact (tr X).
+    + exact (tr(x;idpath)).
+    + specialize (IHp1 (fst x) (fst Hx)).
+      specialize (IHp2 (snd x) (snd Hx)).
+      strip_truncations.
+      destruct IHp1 as [y₁ p₁], IHp2 as [y₂ p₂].
+      refine (tr((y₁,y₂);_)).
+      rewrite p₁, p₂.
+      reflexivity.
+    + destruct x as [z | z].
+      * specialize (IHp1 z Hx).
+        strip_truncations.
+        destruct IHp1 as [y p].
+        exact (tr (inl y;ap inl p)).
+      * specialize (IHp2 z Hx).
+        strip_truncations.
+        destruct IHp2 as [y p].
+        exact (tr (inr y;ap inr p)).
+  Defined.
+
+  Definition surj
+    : forall (h : H), merely {x : T & (p_T x = h)}.
+  Proof.
+    simple refine (@hit_ind Σ H (fun h => merely {x : T & (p_T x = h)}) _ _).
+    - intros i x Hx.
+      simpl in *.
+      simple refine (Trunc_rec _ (wat i x Hx)) ; intro X.
+      destruct X as [X p].
+      apply tr.
+      exists (hit_point _ X).
+      unfold p_T.
+      rewrite hit_point_rec_beta.
+      rewrite p.
+      reflexivity.
+    - unfold path_over.
+      intros.
+      simpl.
+      apply path_ishprop.
+  Defined.
+End inductive_part.
