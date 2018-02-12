@@ -146,19 +146,24 @@ Class is_grpd_morph
      }.
 
 Class is_Agrpd_morph
-           {A : Type}
-           {G₁ G₂ : groupoid A}
-           (Amap : relation_morph idmap (hom G₁) (hom G₂))
+      {A : Type}
+      {G₁ G₂ : groupoid A}
+      (Amap : relation_morph idmap (hom G₁) (hom G₂))
   := is_idd_Agrpd_morph : is_grpd_morph idmap Amap.
+
+Global Instance to_grpd_morph
+       {A : Type}
+       {G₁ G₂ : groupoid A}
+       (Amap : relation_morph idmap (hom G₁) (hom G₂))
+       `{is_Agrpd_morph _ _ _ Amap}
+  : is_grpd_morph idmap Amap.
+Proof.
+  assumption.
+Defined.
 
 Arguments morph_e {_} {_} _ {_} {_} _ {_} _.
 Arguments morph_i {_} {_} _ {_} {_} _ {_} _ _ _.
 Arguments morph_c {_} {_} _ {_} {_} _ {_} _ _ _ _ _.
-
-Definition Agrpd_morph
-           {A : Type}
-           (G₁ G₂ : groupoid A)
-  := {map : relation_morph idmap (hom G₁) (hom G₂) & merely (is_Agrpd_morph map)}.
 
 Definition grpd_morph
            {A B : Type}
@@ -166,10 +171,16 @@ Definition grpd_morph
            (G₁ : groupoid A) (G₂ : groupoid B)
   := {map : relation_morph f (hom G₁) (hom G₂) & merely (is_grpd_morph f map)}.
 
-Coercion test
-         {A : Type}
-         (G₁ : groupoid A) (G₂ : groupoid A)
-  := fun (x : (Agrpd_morph G₁ G₂)) => x.1.
+Definition Agrpd_morph
+           {A : Type}
+           (G₁ G₂ : groupoid A)
+  := grpd_morph idmap G₁ G₂.
+
+Coercion WATER
+         {A B : Type}
+         (f : A -> B)
+         (G₁ : groupoid A) (G₂ : groupoid B)
+  := fun (x : grpd_morph f G₁ G₂) => x.1.
 
 Definition BuildAGrpdMorph {A : Type} (G₁ G₂ : groupoid A)
   (f : relation_morph idmap (hom G₁) (hom G₂)) `{is_Agrpd_morph _ _ _ f}

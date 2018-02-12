@@ -6,9 +6,10 @@ Require Import ED.groupoid.
 Definition lift_constr
            {P : polynomial} {A : Type}
            (f : poly_act P A -> A)
-  : relation_morph (hom (lift_groupoid (path_groupoid A) P)) (hom (path_groupoid A)).
+  : relation_morph f
+                   (hom (lift_groupoid (path_groupoid A) P))
+                   (hom (path_groupoid A)).
 Proof.
-  exists f.
   induction P ; simpl in *.
   - intros ? ? p.
     strip_truncations.
@@ -34,7 +35,7 @@ Defined.
 Global Instance constr_grpd
        {P : polynomial} {A : Type}
        (f : poly_act P A -> A)
-  : is_grpd_morph (lift_constr f).
+  : is_grpd_morph f (lift_constr f).
 Proof.
   unshelve esplit.
   - induction P.
@@ -101,7 +102,11 @@ Proof.
   rewrite (@test2 A).
   rewrite transport_paths_FlFr.
   hott_simpl.
-Defined.  
+Defined.
+
+Definition inv_e (X : Type) (G : groupoid X) (x : X)
+  : inv (e x) = e x
+  := (ec _ _ _ _ _)^ @ ci _ G _ _ _.
 
 Section path_algebra.
   Variable (Σ : hit_signature) (H : HIT Σ).
@@ -116,7 +121,6 @@ Section path_algebra.
     - intros i.
       unshelve esplit.
       + apply lift_constr.
-        exact (hit_point i).
       + apply tr.
         apply constr_grpd.
     - intros j u ; simpl.
@@ -125,4 +129,46 @@ Section path_algebra.
       rewrite !ec.
       reflexivity.
   Defined.
+
+  Variable (G : Halg Σ H).
+
+  Definition weak_initial_map
+    : relation_morph idmap (hom (H_grpd Σ H path_alg)) (hom (H_grpd Σ H G)).
+  Proof.
+    intros ? ? p.
+    strip_truncations.
+    refine (transport (fun z => hom (H_grpd _ _ G) x z) p (e x)).
+  Defined.
+
+  Global Instance idd_grpd_morph
+    : is_Agrpd_morph weak_initial_map.
+  Proof.
+    unshelve esplit.
+    - reflexivity.
+    - intros ? ? p.
+      strip_truncations.
+      induction p.
+      exact (inv_e _ _ x)^.
+    - intros ? ? ? p q.
+      strip_truncations.
+      induction p, q.
+      simpl.
+      apply (ce _ _ _ _ _)^.
+  Defined.
+
+  Definition weak_initial_grpd
+    : Agrpd_morph (H_grpd Σ H path_alg) (H_grpd Σ H G)
+    := (weak_initial_map;tr _).
+
+  Global Instance idd_Halg_morph
+    : isHalg_morph Σ H path_alg G weak_initial_grpd.
+  Proof.
+    unshelve esplit.
+    - intros i ? ? p.
+      simpl in *.
+      admit.
+    - intros j u.
+      simpl.
+      exact (coherent_alg Σ H _ j u).
+  Admitted.
 End path_algebra.
