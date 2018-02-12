@@ -126,88 +126,65 @@ Defined.
     For that, we first define morphisms of relations.
     These come in two kinds: the underlying type could be the same or we have a map between them.
 *)
-Definition A_relation_morph {A : Type} (R₁ R₂ : relation A)
-  := forall (x y : A), R₁ x y -> R₂ x y.
-
-(** To define morphisms between relations with different underlying types, we use that `relation` is a contravariant functor. *)
-Definition fmap
+Definition relation_morph
            {A B : Type}
            (f : A -> B)
-           (X : relation B)
-  : relation A
-  := fun a₁ a₂ => X (f a₁) (f a₂).
-
-Definition relation_morph {A B : Type} (R₁ : relation A) (R₂ : relation B)
-  := {f : A -> B & A_relation_morph R₁ (fmap f R₂)}.
+           (R₁ : relation A) (R₂ : relation B)
+  := forall (x y : A), R₁ x y -> R₂ (f x) (f y).
 
 (** A groupoid morphism is a relation morphism which preserves the algebraic structure. *)
-Class is_Agrpd_morph
-      {A : Type}
-      {G₁ G₂ : groupoid A}
-      (Amap : A_relation_morph (hom G₁) (hom G₂))
-  := { Amorph_e : forall (x : A), Amap _ _ (e x) = e x ;
-       Amorph_i : forall (x y : A) (p : hom G₁ x y),
-           Amap _ _ (inv p) = inv (Amap _ _ p) ;
-       Amorph_c : forall (x y z : A) (p : hom G₁ x y) (q : hom G₁ y z),
-           Amap x z (p × q) = (Amap x y p × Amap y z q)
-     }.
-
-Arguments Amorph_e {_} {_} {_} _ {_} _.
-Arguments Amorph_i {_} {_} {_} _ {_} _.
-Arguments Amorph_c {_} {_} {_} _ {_} _.
-
 Class is_grpd_morph
       {A B : Type}
+      (f : A -> B)
       {G₁ : groupoid A} {G₂ : groupoid B}
-      (map : relation_morph (hom G₁) (hom G₂))
-  := { morph_e : forall (x : A), map.2 _ _ (e x) = e (map.1 x) ;
+      (map : relation_morph f (hom G₁) (hom G₂))
+  := { morph_e : forall (x : A), map _ _ (e x) = e (f x) ;
        morph_i : forall (x y : A) (p : hom G₁ x y),
-           map.2 _ _ (inv p) = inv (map.2 _ _ p) ;
+           map _ _ (inv p) = inv (map _ _ p) ;
        morph_c : forall (x y z : A) (p : hom G₁ x y) (q : hom G₁ y z),
-           map.2 x z (p × q) = (map.2 x y p × map.2 y z q)
+           map x z (p × q) = (map x y p × map y z q)
      }.
 
-(** A-groupoid morphisms are trivially groupoid morphisms *)
-Instance Agrpd_morph_is_grpd_morph (A : Type) (G₁ G₂ : groupoid A)
-   (f : A_relation_morph (hom G₁) (hom G₂))
-  `{is_Agrpd_morph _ _ _ f} : is_grpd_morph (idmap; f).
-Proof. esplit; eauto using Amorph_e, Amorph_i, Amorph_c. Defined.
+Class is_Agrpd_morph
+           {A : Type}
+           {G₁ G₂ : groupoid A}
+           (Amap : relation_morph idmap (hom G₁) (hom G₂))
+  := is_idd_Agrpd_morph : is_grpd_morph idmap Amap.
 
-Arguments morph_e {_} {_} {_} {_} _ {_} _.
-Arguments morph_i {_} {_} {_} {_} _ {_} _.
-Arguments Amorph_c {_} {_} {_} {_} _ {_} _.
+Arguments morph_e {_} {_} _ {_} {_} _ {_} _.
+Arguments morph_i {_} {_} _ {_} {_} _ {_} _ _ _.
+Arguments morph_c {_} {_} _ {_} {_} _ {_} _ _ _ _ _.
 
 Definition Agrpd_morph
            {A : Type}
            (G₁ G₂ : groupoid A)
-  := {map : A_relation_morph (hom G₁) (hom G₂) & merely (is_Agrpd_morph map)}.
+  := {map : relation_morph idmap (hom G₁) (hom G₂) & merely (is_Agrpd_morph map)}.
 
 Definition grpd_morph
            {A B : Type}
+           (f : A -> B)
            (G₁ : groupoid A) (G₂ : groupoid B)
-  := {map : relation_morph (hom G₁) (hom G₂) & merely (is_grpd_morph map)}.
+  := {map : relation_morph f (hom G₁) (hom G₂) & merely (is_grpd_morph f map)}.
 
-(** Make the lifting Agrpd_morph_is_grpd_morph explicit on the level of sigma types. *)
-Definition Agrpd_morph_lift {A : Type} (G₁ G₂ : groupoid A) :
-  Agrpd_morph G₁ G₂ -> grpd_morph G₁ G₂.
-Proof.
-  intros [f pf].
-  simple refine (_;_).
-  - exists idmap. apply f.
-  - simpl. strip_truncations. apply tr. apply _.
-Defined.
+Coercion test
+         {A : Type}
+         (G₁ : groupoid A) (G₂ : groupoid A)
+  := fun (x : (Agrpd_morph G₁ G₂)) => x.1.
 
 Definition BuildAGrpdMorph {A : Type} (G₁ G₂ : groupoid A)
-  (f : A_relation_morph (hom G₁) (hom G₂)) `{is_Agrpd_morph _ _ _ f}
-  : Agrpd_morph G₁ G₂.
-Proof. exists f. apply tr. apply _. Defined.
+  (f : relation_morph idmap (hom G₁) (hom G₂)) `{is_Agrpd_morph _ _ _ f}
+  : Agrpd_morph G₁ G₂
+  := (f;tr _).
 
 (** We need the identity. *)
-Instance id_is_Agrpd_morph {A : Type} (G₁ : groupoid A) :
-  @is_Agrpd_morph A G₁ G₁ (fun _ _ => idmap).
-Proof. esplit; reflexivity. Defined.
-Definition id_Agrpd {A : Type} (G₁ : groupoid A)
-  : Agrpd_morph G₁ G₁ := BuildAGrpdMorph _ _ (fun _ _ => idmap).
+Global Instance id_is_Agrpd_morph {A : Type} (G₁ : groupoid A)
+  : @is_Agrpd_morph A G₁ G₁ (fun _ _ => idmap).
+Proof.
+  esplit; reflexivity.
+Defined.
+
+Definition id_Agrpd {A : Type} (G₁ : groupoid A) : Agrpd_morph G₁ G₁
+  := BuildAGrpdMorph _ _ (fun _ _ => idmap).
 
 (** Now we show lifting is functorial. *)
 Definition sum_func
@@ -226,24 +203,24 @@ Proof.
     + intros [x | x] ; simpl.
       * simple refine (Trunc_rec _ (F₁.2)).
         intros H.
-        apply (Amorph_e _).
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_e _).
+        apply H.
     + intros [x | x] [y | y] p ; try contradiction ; simpl.
       * simple refine (Trunc_rec _ (F₁.2)).
         intros H.
-        apply (Amorph_i _).
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_i _).
+        apply H.
     + intros [x | x] [y | y] [z | z] p q ; try contradiction ; simpl.
       * simple refine (Trunc_rec _ (F₁.2)).
         intros H.
-        apply (Amorph_c _ _ _).
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_c _).
+        apply H.
 Defined.
 
 Definition prod_func
@@ -264,26 +241,26 @@ Proof.
       apply path_prod'.
       * simple refine (Trunc_rec _ (F₁.2)).
         intros H.
-        apply (Amorph_e _).
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_e _).
+        apply H.
     + intros [x1 x2] [y1 y2] p ; simpl.
       apply path_prod'.
       * simple refine (Trunc_rec _ (F₁.2)).
-        intros H.
-        apply (Amorph_i _).
+        intro H.
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_i _).
+        apply H.
     + intros [x1 x2] [y1 y2] [z1 z2] p q ; simpl.
       apply path_prod'.
       * simple refine (Trunc_rec _ (F₁.2)).
         intros H.
-        apply (Amorph_c _ _ _).
+        apply H.
       * simple refine (Trunc_rec _ (F₂.2)).
         intros H.
-        apply (Amorph_c _).
+        apply H.
 Defined.
 
 Definition poly_func
@@ -314,9 +291,11 @@ Section H_alg.
       which lies over `C_i`.
    *)
   Definition hit_point_morph (G : groupoid H) (i : sig_point_index Σ) :=
-    A_relation_morph
-      (hom (lift_groupoid G (sig_point Σ i)))
-      (fmap (hit_point i) (hom G)).
+    grpd_morph
+      (hit_point i)
+      (lift_groupoid G (sig_point Σ i))
+      G.
+  
   Definition P_alg (G : groupoid H) : Type
     := forall (i : sig_point_index Σ), hit_point_morph G i.
 
@@ -359,14 +338,12 @@ Section H_alg.
     := forall (i : sig_point_index Σ)
               (a₁ a₂ : poly_act (sig_point Σ i) H)
               (x : hom (lift_groupoid (H_grpd G₁) (sig_point Σ i)) a₁ a₂),
-      F.1 _ _ (point_alg G₁ i _ _ x)
+      F.1 _ _ ((point_alg G₁ i).1 _ _ x)
       =
-      point_alg
-        G₂
-        i
-        _
-        _
-        ((poly_func (sig_point Σ i) (H_grpd G₁) (H_grpd G₂) F).1 _ _ x).    
+      (point_alg G₂ i).1
+                      _
+                      _
+                      ((poly_func (sig_point Σ i) (H_grpd G₁) (H_grpd G₂) F).1 _ _ x).    
   
   Definition preserves_paths {G₁ G₂ : Halg} (F : Agrpd_morph (H_grpd G₁) (H_grpd G₂))
     : Type
