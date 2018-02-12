@@ -3,6 +3,196 @@ Require Import ED.polynomial.
 Require Import ED.hit_structure.
 Require Import ED.groupoid.
 
+Definition ap_tr
+           {A B : Type}
+           (f : A -> B)
+           {a₁ a₂ : A}
+           (p : hom (path_groupoid A) a₁ a₂)
+  : hom (path_groupoid B) (f a₁) (f a₂).
+Proof.
+  simple refine (Trunc_rec _ p).
+  exact (tr o (ap f)).
+Defined.
+
+Definition ap_tr_inv
+           {A B : Type}
+           (f : A -> B)
+           {a₁ a₂ : A}
+           (p : hom (path_groupoid A) a₁ a₂)
+  : ap_tr f (inv p) = inv (ap_tr f p).
+Proof.
+  simple refine (Trunc_ind (fun _ => _) _ p) ; intros q ; simpl.
+  exact (ap tr (ap_V _ _)).
+Defined.
+
+Definition ap_tr_concat
+           {A B : Type}
+           (f : A -> B)
+           {a₁ a₂ a₃ : A}
+           (p₁ : hom (path_groupoid A) a₁ a₂)
+           (p₂ : hom (path_groupoid A) a₂ a₃)
+  : ap_tr f (p₁ · p₂) = (ap_tr f p₁ · ap_tr f p₂).
+Proof.
+  simple refine (Trunc_ind (fun _ => _) _ p₁) ; intros q₁ ; simpl.
+  simple refine (Trunc_ind (fun _ => _) _ p₂) ; intros q₂ ; simpl.
+  exact (ap tr (ap_pp _ _ _)).
+Defined.
+
+Definition path_prod'_tr
+           {A B : Type}
+           {a₁ a₂ : A} {b₁ b₂ : B}
+           (p₁ : hom (path_groupoid A) a₁ a₂) (p₂ : hom (path_groupoid B) b₁ b₂)
+  : hom (path_groupoid (A*B)) (a₁,b₁) (a₂,b₂).
+Proof.
+  simple refine (Trunc_rec _ p₁) ; intros q₁.
+  simple refine (Trunc_rec _ p₂) ; intros q₂.
+  exact (tr (path_prod' q₁ q₂)).
+Defined.
+
+Definition path_prod'_tr_e
+           {A B : Type}
+           (a : A) (b : B)
+  : path_prod'_tr (e a) (e b) = e (a, b).
+Proof.
+  simpl.
+  reflexivity.
+Defined.
+
+Definition path_prod'_inv
+           {A B : Type}
+           {a₁ a₂ : A} {b₁ b₂ : B}
+           (p₁ : a₁ = a₂) (p₂ : b₁ = b₂)
+  : path_prod' p₁^ p₂^ = (path_prod' p₁ p₂)^.
+Proof.
+  induction p₁, p₂ ; simpl.
+  reflexivity.
+Defined.
+
+Definition path_prod'_tr_inv
+           {A B : Type}
+           {a₁ a₂ : A} {b₁ b₂ : B}
+           (p₁ : hom (path_groupoid A) a₁ a₂) (p₂ : hom (path_groupoid B) b₁ b₂)
+  : path_prod'_tr (inv p₁) (inv p₂) = inv (path_prod'_tr p₁ p₂).
+Proof.
+  simple refine (Trunc_ind (fun _ => _) _ p₁) ; intros q₁.
+  simple refine (Trunc_ind (fun _ => _) _ p₂) ; intros q₂.
+  simpl.
+  apply (ap tr).
+  apply path_prod'_inv.
+Defined.
+
+Definition path_prod'_concat
+           {A B : Type}
+           {a₁ a₂ a₃ : A} {b₁ b₂ b₃ : B}
+           (p₁ : a₁ = a₂) (p₂ : b₁ = b₂)
+           (q₁ : a₂ = a₃) (q₂ : b₂ = b₃)
+  : path_prod' (p₁ @ q₁) (p₂ @ q₂)
+    =
+    (path_prod' p₁ p₂) @ (path_prod' q₁ q₂).
+Proof.
+  induction p₁, p₂, q₁, q₂ ; simpl.
+  reflexivity.
+Defined.
+
+Definition path_prod'_tr_concat
+           {A B : Type}
+           {a₁ a₂ a₃ : A} {b₁ b₂ b₃ : B}
+           (p₁ : hom (path_groupoid A) a₁ a₂) (p₂ : hom (path_groupoid B) b₁ b₂)
+           (q₁ : hom (path_groupoid A) a₂ a₃) (q₂ : hom (path_groupoid B) b₂ b₃)
+  : path_prod'_tr (p₁ · q₁) (p₂ · q₂)
+    =
+    ((path_prod'_tr p₁ p₂) · (path_prod'_tr q₁ q₂)).
+Proof.
+  simple refine (Trunc_ind (fun _ => _) _ p₁) ; intros r₁.
+  simple refine (Trunc_ind (fun _ => _) _ p₂) ; intros r₂.
+  simple refine (Trunc_ind (fun _ => _) _ q₁) ; intros s₁.
+  simple refine (Trunc_ind (fun _ => _) _ q₂) ; intros s₂.
+  simpl.
+  apply (ap tr).
+  apply path_prod'_concat.
+Defined.
+
+Definition test
+           {P : polynomial} {A : Type}
+  : relation_morph
+      idmap
+      (hom (lift_groupoid (path_groupoid A) P))
+      (hom (path_groupoid (poly_act P A))).
+Proof.
+  intros ? ? p.
+  induction P ; simpl in *.
+  - exact p.
+  - exact p.
+  - specialize (IHP1 (fst x) (fst y) (fst p)).
+    specialize (IHP2 (snd x) (snd y) (snd p)).
+    exact (path_prod'_tr IHP1 IHP2).
+  - destruct x as [x | x], y as [y | y].
+    + exact (ap_tr inl (IHP1 x y p)).
+    + contradiction.
+    + contradiction.
+    + exact (ap_tr inr (IHP2 x y p)).
+Defined.
+
+Global Instance wat
+       {P : polynomial} {A : Type}
+  : is_Agrpd_morph (@test P A).
+Proof.
+  unshelve esplit.
+  - induction P.
+    + reflexivity.
+    + reflexivity.
+    + intros.
+      specialize (IHP1 (fst x)).
+      specialize (IHP2 (snd x)).
+      simpl.
+      rewrite IHP1, IHP2.
+      apply path_prod'_tr_e.
+    + intros.
+      destruct x as [x | x] ; simpl.
+      * specialize (IHP1 x).
+        rewrite IHP1.
+        reflexivity.
+      * specialize (IHP2 x).
+        rewrite IHP2.
+        reflexivity.
+  - induction P.
+    + reflexivity.
+    + reflexivity.
+    + intros x y p.
+      specialize (IHP1 (fst x) (fst y) (fst p)).
+      specialize (IHP2 (snd x) (snd y) (snd p)).
+      simpl.
+      rewrite IHP1, IHP2.
+      apply path_prod'_tr_inv.
+    + intros [x | x] [y | y] p ; try contradiction.
+      * specialize (IHP1 x y p).
+        simpl.
+        rewrite IHP1.
+        apply ap_tr_inv.
+      * specialize (IHP2 x y p).
+        simpl.
+        rewrite IHP2.
+        apply ap_tr_inv.
+  - induction P.
+    + reflexivity.
+    + reflexivity.
+    + intros x y z p q.
+      specialize (IHP1 (fst x) (fst y) (fst z) (fst p) (fst q)).
+      specialize (IHP2 (snd x) (snd y) (snd z) (snd p) (snd q)).
+      simpl.
+      rewrite IHP1, IHP2.
+      apply path_prod'_tr_concat.
+    + intros [x | x] [y | y] [z | z] p q ; try contradiction.
+      * specialize (IHP1 x y z p q).
+        simpl.
+        rewrite IHP1.
+        apply ap_tr_concat.
+      * specialize (IHP2 x y z p q).
+        simpl.
+        rewrite IHP2.
+        apply ap_tr_concat.
+Defined.
+
 Definition lift_constr
            {P : polynomial} {A : Type}
            (f : poly_act P A -> A)
@@ -10,26 +200,10 @@ Definition lift_constr
                    (hom (lift_groupoid (path_groupoid A) P))
                    (hom (path_groupoid A)).
 Proof.
-  induction P ; simpl in *.
-  - intros ? ? p.
-    strip_truncations.
-    exact (tr (ap f p)).
-  - intros ? ? p.
-    strip_truncations.
-    exact (tr (ap f p)).
-  - intros [x1 y1] [x2 y2] [p1 p2].
-    pose (IHP1 (fun z => f(z, y1)) _ _ p1) as q1.
-    pose (IHP2 (fun z => f(x2, z)) _ _ p2) as q2.
-    exact (comp A (path_groupoid A) (f(x1, y1)) (f(x2,y1)) (f(x2, y2)) q1 q2).
-  - intros x y p.
-    specialize (IHP1 (f o inl)).
-    specialize (IHP2 (f o inr)).
-    simpl in *.
-    destruct x as [x | x], y as [y | y].
-    + exact (IHP1 _ _ p).
-    + contradiction.
-    + contradiction.
-    + exact (IHP2 _ _ p).
+  intros ? ? p.
+  simpl.
+  refine (ap_tr f _).
+  exact (test _ _ p).
 Defined.
 
 Global Instance constr_grpd
@@ -38,42 +212,19 @@ Global Instance constr_grpd
   : is_grpd_morph f (lift_constr f).
 Proof.
   unshelve esplit.
-  - induction P.
-    + reflexivity.
-    + reflexivity.
-    + intros [x1 x2].
-      specialize (IHP1 (fun z => f(z,x2)) x1).
-      specialize (IHP2 (fun z => f(x1,z)) x2).
-      cbn -[lift_constr] in *.
-      admit.
-    + intros [x | x].
-      * exact (IHP1 _ x).
-      * exact (IHP2 _ x).
   - intros.
-    induction P.
-    + strip_truncations.
-      induction p.
-      reflexivity.
-    + strip_truncations.
-      induction p.
-      reflexivity.
-    + admit.
-    + destruct x as [x | x], y as [y | y] ; try contradiction.
-      * exact (IHP1 _ x y p).
-      * exact (IHP2 _ x y p).
+    unfold lift_constr.
+    rewrite morph_e ; try (apply _).
+    reflexivity.
   - intros.
-    induction P.
-    + strip_truncations.
-      induction p, q.
-      reflexivity.
-    + strip_truncations.
-      induction p, q.
-      reflexivity.
-    + admit.
-    + destruct x as [x | x], y as [y | y], z as [z | z] ; try contradiction.
-      * exact (IHP1 _ x y z p q).
-      * exact (IHP2 _ x y z p q).
-Admitted.
+    unfold lift_constr.
+    rewrite morph_i ; try (apply _).
+    apply ap_tr_inv.
+  - intros.
+    unfold lift_constr.
+    rewrite morph_c ; try (apply _).
+    apply ap_tr_concat.
+Defined.
 
 Lemma test2
       {A : Type}
@@ -89,7 +240,7 @@ Proof.
   reflexivity.
 Defined.              
 
-Lemma test
+Lemma test3
       {A B : Type}
       {f g : A -> B}
       {a₁ a₂ : A}
@@ -124,20 +275,38 @@ Section path_algebra.
       + apply tr.
         apply constr_grpd.
     - intros j u ; simpl.
-      rewrite test.
+      rewrite test3.
       hott_simpl.
       rewrite !ec.
       reflexivity.
   Defined.
 
   Variable (G : Halg Σ H).
+  Context `{Univalence}.
+
+  Definition unique_initial
+             (F₁ F₂ : Agrpd_morph (H_grpd Σ H path_alg) (H_grpd Σ H G))
+    : F₁ = F₂.
+  Proof.
+    simple refine (path_sigma' _ _ _).
+    - apply path_forall ; intro.
+      apply path_forall ; intro.
+      apply path_forall ; intro p.
+      destruct F₁ as [F₁ P₁].
+      destruct F₂ as [F₂ P₂].
+      strip_truncations.
+      induction p ; simpl.
+      rewrite (morph_e _ F₁), (morph_e _ F₂).
+      reflexivity.
+    - apply path_ishprop.
+  Defined.
 
   Definition weak_initial_map
     : relation_morph idmap (hom (H_grpd Σ H path_alg)) (hom (H_grpd Σ H G)).
   Proof.
     intros ? ? p.
-    strip_truncations.
-    refine (transport (fun z => hom (H_grpd _ _ G) x z) p (e x)).
+    refine (Trunc_rec _ p) ; intros q.
+    refine (transport (fun z => hom (H_grpd _ _ G) x z) q (e x)).
   Defined.
 
   Global Instance idd_grpd_morph
@@ -166,6 +335,7 @@ Section path_algebra.
     unshelve esplit.
     - intros i ? ? p.
       simpl in *.
+      unfold lift_constr.
       admit.
     - intros j u.
       simpl.
