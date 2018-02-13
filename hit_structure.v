@@ -585,52 +585,48 @@ Section inductive_part.
     apply hit_point.
   Defined.
 
-  Definition wat
+  (* Given a constructor C : P[H] -> H and x : P[H] *)
+  (* and homotopy fibers of 'p_T' over all the subterms of x, *)
+  (* construct a homotopy fiber of 'P[p_T]' over x. *)
+  Definition preimage_lift
              (i : sig_point_index Σ)
              (x : poly_act (sig_point Σ i) H)
-             (Hx : poly_fam (sig_point Σ i) (fun h : H => merely {x : T & p_T x = h}) x)
-    : merely ({X : poly_act (sig_point Σ i) T & poly_map (sig_point Σ i) p_T X = x}).
+             (IH : poly_fam (sig_point Σ i) (fun h : H => Trunc -1 (hfiber p_T h)) x)
+    : Trunc -1 (hfiber (poly_map (sig_point Σ i) p_T) x).
   Proof.
     induction (sig_point Σ i) ; simpl in *.
-    + simple refine (Trunc_rec _ Hx).
-      intro X.
-      exact (tr X).
+    + apply IH.
     + exact (tr(x;idpath)).
-    + specialize (IHp1 (fst x) (fst Hx)).
-      specialize (IHp2 (snd x) (snd Hx)).
+    + specialize (IHp1 (fst x) (fst IH)).
+      specialize (IHp2 (snd x) (snd IH)).
       strip_truncations.
       destruct IHp1 as [y₁ p₁], IHp2 as [y₂ p₂].
       refine (tr((y₁,y₂);_)).
       rewrite p₁, p₂.
       reflexivity.
     + destruct x as [z | z].
-      * specialize (IHp1 z Hx).
+      * specialize (IHp1 z IH).
         strip_truncations.
         destruct IHp1 as [y p].
         exact (tr (inl y;ap inl p)).
-      * specialize (IHp2 z Hx).
+      * specialize (IHp2 z IH).
         strip_truncations.
         destruct IHp2 as [y p].
         exact (tr (inr y;ap inr p)).
   Defined.
 
-  Definition surj
-    : forall (h : H), merely {x : T & (p_T x = h)}.
+  Instance p_T_surj : IsSurjection p_T.
   Proof.
-    simple refine (@hit_ind Σ H (fun h => merely {x : T & (p_T x = h)}) _ _).
-    - intros i x Hx.
-      simpl in *.
-      simple refine (Trunc_rec _ (wat i x Hx)) ; intro X.
-      destruct X as [X p].
+    apply BuildIsSurjection.
+    simple refine (@hit_ind Σ H _ _ _).
+    - simpl; intros i x Hx.
+      simple refine (Trunc_rec _ (preimage_lift i x Hx)); intros [X p].
       apply tr.
       exists (hit_point _ X).
       unfold p_T.
       rewrite hit_point_rec_beta.
-      rewrite p.
-      reflexivity.
-    - unfold path_over.
-      intros.
-      simpl.
+      f_ap.
+    - unfold path_over; intros.
       apply path_ishprop.
   Defined.
 End inductive_part.
