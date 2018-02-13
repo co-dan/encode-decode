@@ -6,3 +6,4 @@ hit_structure.v
 groupoid.v
 wild_groupoid.v
 path_space.v
+wild_path_space.v
