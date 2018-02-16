@@ -168,6 +168,70 @@ Inductive square (A : Type)
 Arguments square {A a₁ a₂ a₃ a₄} _ _ _ _.
 Arguments id_square {A a}.
 
+Definition whisker_square
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ q₁ : a₁ = a₂} {p₂ q₂ : a₂ = a₄}
+           {p₃ q₃ : a₁ = a₃} {p₄ q₄ : a₃ = a₄}
+           (r₁ : p₁ = q₁) (r₂ : p₂ = q₂)
+           (r₃ : p₃ = q₃) (r₄ : p₄ = q₄)
+           (s : square p₁ p₂ p₃ p₄)
+  : square q₁ q₂ q₃ q₄.
+Proof.
+  induction r₁, r₂, r₃, r₄.
+  exact s.
+Defined.
+
+Definition square_to_path
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s : square p₁ p₂ p₃ p₄)
+  : p₁ @ p₂ = p₃ @ p₄.
+Proof.
+  induction s.
+  reflexivity.
+Defined.
+
+Definition square_to_path'
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s : square p₁ p₂ p₃ p₄)
+  : p₁ = p₃ @ p₄ @ p₂^.
+Proof.
+  induction s.
+  reflexivity.
+Defined.
+
+Definition path_to_square
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s : p₁ @ p₂ = p₃ @ p₄)
+  : square p₁ p₂ p₃ p₄.
+Proof.
+  induction p₁, p₂, p₃ ; simpl in *.
+  refine (whisker_square idpath idpath idpath _ id_square).
+  exact (s @ concat_1p p₄).
+Defined.
+
+Definition path_to_square'
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s : p₃^ @ p₁ @ p₂ = p₄)
+  : square p₁ p₂ p₃ p₄.
+Proof.
+  induction p₁, p₂, p₃ ; simpl in *.
+  refine (whisker_square idpath idpath idpath _ id_square).
+  exact s.
+Defined.
+
 Definition hrefl_square {A : Type} {a₁ a₂ : A} (p : a₁ = a₂)
   : square p idpath idpath p.
 Proof.
@@ -235,20 +299,6 @@ Proof.
   exact id_square.
 Defined.
 
-Definition whisker_square
-           {A : Type}
-           {a₁ a₂ a₃ a₄ : A}
-           {p₁ q₁ : a₁ = a₂} {p₂ q₂ : a₂ = a₄}
-           {p₃ q₃ : a₁ = a₃} {p₄ q₄ : a₃ = a₄}
-           (r₁ : p₁ = q₁) (r₂ : p₂ = q₂)
-           (r₃ : p₃ = q₃) (r₄ : p₄ = q₄)
-           (s : square p₁ p₂ p₃ p₄)
-  : square q₁ q₂ q₃ q₄.
-Proof.
-  induction r₁, r₂, r₃, r₄.
-  exact s.
-Defined.
-
 Definition square_v
            {A : Type}
            {a₁ a₂ a₃ a₄ : A}
@@ -266,6 +316,27 @@ Proof.
   - reflexivity.
   - reflexivity.
   - exact (concat_1p _)^.
+Defined.
+
+Definition square_v'
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s₁ : square p₁ p₂ p₃ p₄)
+           {a₅ a₆ : A}
+           {p₅ : a₂ = a₅} {p₆ : a₅ = a₆} {p₇ : a₄ = a₆}
+           (s₂ : square p₅ p₆ p₂ p₇)
+           {q₁ : a₁ = a₅} {q₂ : a₃ = a₆}
+           (H₁ : p₁ @ p₅ = q₁) (H₂ : p₄ @ p₇ = q₂)
+  : square q₁ p₆ p₃ q₂.
+Proof.
+  induction s₁.
+  refine (whisker_square _ _ _ _ s₂).
+  - exact ((concat_1p _)^ @ H₁).
+  - reflexivity.
+  - reflexivity.
+  - exact ((concat_1p _)^ @ H₂).
 Defined.
 
 Definition square_h
@@ -286,6 +357,78 @@ Proof.
   - exact (concat_p1 _)^.
   - reflexivity.
 Defined.
+
+Definition square_h'
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s₁ : square p₁ p₂ p₃ p₄)
+           {a₅ a₆ : A}
+           {p₅ : a₃ = a₅} {p₆ : a₅ = a₆} {p₇ : a₄ = a₆}
+           (s₂ : square p₅ p₆ p₄ p₇)
+           {q₁ : a₂ = a₆} {q₂ : a₁ = a₅}
+           (H₁ : p₂ @ p₇ = q₁) (H₂ : p₃ @ p₅ = q₂)
+  : square p₁ q₁ q₂ p₆.
+Proof.
+  induction s₂.
+  refine (whisker_square _ _ _ _ s₁).
+  - reflexivity.
+  - exact ((concat_p1 _)^ @ H₁).
+  - exact ((concat_p1 _)^ @ H₂).
+  - reflexivity.
+Defined.
+
+Definition square_d
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s₁ : square p₁ p₂ p₃ p₄)
+           {a₅ : A}
+           {p₅ : a₁ = a₅} {p₆ : a₅ = a₄}
+           (s₂ : square p₃ p₄ p₅ p₆)
+  : square p₁ p₂ p₅ p₆.
+Proof.
+  induction s₁.
+  exact s₂.
+Defined.
+
+Definition square_glue
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s₁ : square p₁ p₂ p₃ p₄)
+           {a₅ a₆ : A}
+           {p₅ : a₄ = a₆} {p₆ : a₃ = a₅} {p₇ : a₅ = a₆}
+           (s₂ : square p₄ p₅ p₆ p₇)
+           (q₁ : a₂ = a₆) (q₂ : a₁ = a₅)
+           (H₁ : p₂ @ p₅ = q₁) (H₂ : p₃ @ p₆ = q₂)
+  : square p₁ q₁ q₂ p₇.
+Proof.
+  induction s₁.
+  refine (whisker_square _ _ _ _ s₂).
+  - reflexivity.
+  - exact ((concat_1p p₅)^ @ H₁).
+  - exact ((concat_1p p₆)^ @ H₂).
+  - reflexivity.
+Defined.
+
+Definition square_squash
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s₁ : square p₁ p₂ p₃ p₄)
+           {a₅ : A}
+           {p₅ : a₁ = a₅} {p₆ : a₅ = a₄}
+           (s₂ : square p₃ p₄ p₅ p₆)
+           {a₆ : A}
+           {p₇ : a₁ = a₆} {p₈ : a₆ = a₄}
+           (s₃ : square p₇ p₈ p₁ p₂)
+  : square p₇ p₈ p₅ p₆
+  := square_d s₃ (square_d s₁ s₂).
 
 Definition square_symmetry
            {A : Type}
