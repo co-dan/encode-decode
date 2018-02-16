@@ -130,3 +130,21 @@ End HIT_Definition.
 Arguments hit_point {_ _} _ _.
 Arguments hit_path {_ _} _ _.
 Arguments hit_ind {_ _} _ _ _ _.
+
+Definition hit_ind_square
+           {Σ : hit_signature}
+           {H : HIT Σ}
+           {A : Type}
+           (f g : H -> A)
+           (c : point_over Σ (fun x : H => f x = g x) hit_point hit_path)
+           (s : forall j u h, square (endpoint_dact hit_point c (sig_path_lhs Σ j) u h)
+                     (ap g (hit_path j u))
+                     (ap f (hit_path j u))
+                     (endpoint_dact hit_point c (sig_path_rhs Σ j) u h))
+  : forall (x : H), f x = g x.
+Proof.
+  simple refine (hit_ind _ c _).
+  intros j u h ; simpl.
+  refine (transport_paths_FlFr _ _ @ _^).
+  exact (square_to_path_l (s j u h))^.
+Defined.

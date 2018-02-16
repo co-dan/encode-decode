@@ -194,7 +194,19 @@ Proof.
   reflexivity.
 Defined.
 
-Definition square_to_path'
+Definition square_to_path_l
+           {A : Type}
+           {a₁ a₂ a₃ a₄ : A}
+           {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
+           {p₃ : a₁ = a₃} {p₄ : a₃ = a₄}
+           (s : square p₁ p₂ p₃ p₄)
+  : p₃^ @ p₁ @ p₂ = p₄.
+Proof.
+  induction s.
+  reflexivity.
+Defined.
+
+Definition square_to_path_r
            {A : Type}
            {a₁ a₂ a₃ a₄ : A}
            {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
@@ -219,7 +231,7 @@ Proof.
   exact (s @ concat_1p p₄).
 Defined.
 
-Definition path_to_square'
+Definition path_to_square_r
            {A : Type}
            {a₁ a₂ a₃ a₄ : A}
            {p₁ : a₁ = a₂} {p₂ : a₂ = a₄}
