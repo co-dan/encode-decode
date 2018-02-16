@@ -1,0 +1,9 @@
+-R . "ED"
+COQC = hoqc
+COQDEP = hoqdep
+heterogeneous_equality.v
+polynomial.v
+endpoints.v
+hit_code.v
+hit_algebra.v
+hit_recursion.v
