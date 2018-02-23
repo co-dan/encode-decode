@@ -431,36 +431,3 @@ Proof.
   rewrite transport_paths_FlFr in p.
   exact p.
 Defined.
-
-(** In a quotient one identifies points.
-    Our goal is to define 'wild quotients' in which one can identify points, paths, ...
-    For this, we define relations.
- *)
-Definition relation (A : Type) : Type
-  := forall (n : nat) (p q : gset A n), Type.
-
-Definition constant_relation (A : Type) : relation A
-  := fun n p q => p = q.
-
-Definition prod_relation {A B : Type} (R : relation A) (S : relation B)
-  : relation (A * B)
-  := fun n p q =>
-       (R n (ap_n fst p) (ap_n fst q)) * (S n (ap_n snd p) (ap_n snd q)).
-
-Definition sum_relation {A B : Type} (R : relation A) (S : relation B)
-  : relation (A + B)
-  := fun n p q
-     => match (gset_sum p), (gset_sum q) with
-        | inl x, inl y => R n x y
-        | inr x, inr y => S n x y
-        | _, _ => Empty
-        end.
-
-Fixpoint lift_relation (P : polynomial) {A : Type} (R : relation A)
-  : relation (poly_act P A)
-  := match P with
-     | poly_var => R
-     | poly_const T => constant_relation T
-     | poly_times P₁ P₂ => prod_relation (lift_relation P₁ R) (lift_relation P₂ R)
-     | poly_plus P₁ P₂ => sum_relation (lift_relation P₁ R) (lift_relation P₂ R)
-     end.
