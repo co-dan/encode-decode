@@ -1,9 +1,15 @@
 -R . "ED"
 COQC = hoqc
 COQDEP = hoqdep
-polynomial.v
+hit_structure/polynomial.v
+# hit_structure/heterogeneous_equality.v
+# hit_structure/endpoints.v
+# hit_structure/hit_algebra.v
+# hit_structure/hit_code.v
 hit_structure.v
 groupoid.v
 wild_groupoid.v
 path_space.v
 wild_path_space.v
+general/path_space.v
+general/relations.v

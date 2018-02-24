@@ -1,6 +1,5 @@
 Require Import HoTT.
-Require Import polynomial.
-Require Import path_space.
+From ED Require Import polynomial general.path_space.
 
 (** In a quotient one identifies points.
     Our goal is to define 'wild quotients' in which one can identify points, paths, ...

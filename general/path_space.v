@@ -1,5 +1,5 @@
 Require Import HoTT.
-Require Import polynomial.
+Require Import ED.polynomial.
 
 (** Every type induces a reflexive globular set.
     This means that we have types `A_n`, maps `s, t : A_{n+1} -> A_n` and `i : A_n -> A_{n+1}`
